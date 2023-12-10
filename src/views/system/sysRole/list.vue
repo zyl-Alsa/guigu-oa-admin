@@ -83,6 +83,23 @@ export default {
           this.total = response.data.total;
         });
     },
+    // 删除
+    removeDataById(id){
+      this.$confirm('此操作将永久删除该记录, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+        // 当点击"确定"时，执行then方法，当点击“取消”，执行catch方法，因为“取消”什么都不用做，所以就不写catch了
+    }).then(()=> {
+      // 点击“确定”后调用removeById方法
+      return api.removeById(id)
+    }).then(response => {
+      // 删除成功后刷新页面
+      this.fetchData()
+      // 提示信息
+      this.$message.success(response.message || '删除成功')
+    })
+    }
   },
 };
 </script>
