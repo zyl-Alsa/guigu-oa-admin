@@ -6,25 +6,45 @@
         <el-row>
           <el-col :span="24">
             <el-form-item label="角色名称">
-              <el-input style="width: 100%" v-model="searchObj.roleName" placeholder="角色名称"></el-input>
+              <el-input
+                style="width: 100%"
+                v-model="searchObj.roleName"
+                placeholder="角色名称"
+              ></el-input>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row style="display: flex">
-          <el-button 
-          type="primary" 
-          icon="el-icon-search" 
-          size="mini" 
-          :loading="loading"
-            @click="fetchData()">搜索</el-button>
-          <el-button icon="el-icon-refresh" size="mini" @click="resetData">重置</el-button>
+          <el-button
+            type="primary"
+            icon="el-icon-search"
+            size="mini"
+            :loading="loading"
+            @click="fetchData()"
+            >搜索</el-button
+          >
+          <el-button type="success" icon="el-icon-plus" size="mini" @click="add"
+            >添加</el-button
+          >
+          <!-- 工具条 -->
+          <!-- <div class="tools-div">
+      </div> -->
+          <el-button icon="el-icon-refresh" size="mini" @click="resetData"
+            >重置</el-button
+          >
         </el-row>
       </el-form>
     </div>
 
     <!-- 表格 -->
-    <el-table v-loading="listLoading" :data="list" stripe border style="width: 100%; margin-top: 10px"
-      @selection-change="handleSelectionChange">
+    <el-table
+      v-loading="listLoading"
+      :data="list"
+      stripe
+      border
+      style="width: 100%; margin-top: 10px"
+      @selection-change="handleSelectionChange"
+    >
       <el-table-column type="selection" />
 
       <el-table-column label="序号" width="70" align="center">
@@ -38,15 +58,68 @@
       <el-table-column prop="createTime" label="创建时间" width="160" />
       <el-table-column label="操作" width="200" align="center">
         <template slot-scope="scope">
-          <el-button type="primary" icon="el-icon-edit" size="mini" @click="edit(scope.row.id)" title="修改" />
-          <el-button type="danger" icon="el-icon-delete" size="mini" @click="removeDataById(scope.row.id)" title="删除" />
+          <el-button
+            type="primary"
+            icon="el-icon-edit"
+            size="mini"
+            @click="edit(scope.row.id)"
+            title="修改"
+          />
+          <el-button
+            type="danger"
+            icon="el-icon-delete"
+            size="mini"
+            @click="removeDataById(scope.row.id)"
+            title="删除"
+          />
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 分页组件 -->
-    <el-pagination :current-page="page" :total="total" :page-size="limit" style="padding: 30px 0; text-align: center"
-      layout="total, prev, pager, next, jumper" @current-change="fetchData" />
+    <el-pagination
+      :current-page="page"
+      :total="total"
+      :page-size="limit"
+      style="padding: 30px 0; text-align: center"
+      layout="total, prev, pager, next, jumper"
+      @current-change="fetchData"
+    />
+
+    <!-- “添加”按钮弹出框 -->
+    <el-dialog title="添加/修改" :visible.sync="dialogVisible" width="40%">
+      <!-- dialogVisible为true时弹出框，为false则不会弹出 -->
+      <el-form
+        ref="dataForm"
+        :model="sysRole"
+        label-width="150px"
+        size="small"
+        style="padding-right: 40px"
+      >
+        <el-form-item label="角色名称">
+          <el-input v-model="sysRole.roleName" />
+        </el-form-item>
+        <el-form-item label="角色编码">
+          <el-input v-model="sysRole.roleCode" />
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <!-- @click="dialogVisible = false" ：点击“取消”就会关闭弹出框 -->
+        <el-button
+          @click="dialogVisible = false"
+          size="small"
+          icon="el-icon-refresh-right"
+          >取 消</el-button
+        >
+        <el-button
+          type="primary"
+          icon="el-icon-check"
+          @click="saveOrUpdate()"
+          size="small"
+          >确 定</el-button
+        >
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -56,14 +129,16 @@ import api from "@/api/system/sysRole";
 
 export default {
   // 第二步：vue代码结构
-  // 初始值
+  // 初始值，定义数据模型
   data() {
     return {
       list: [], // 角色列表
       page: 1, // 当前页
-      limit: 1, // 每页显示记录数
+      limit: 5, // 每页显示记录数
       total: 0, // 总记录数
       searchObj: {}, // 条件对象
+      sysRole: {}, // 封装表单角色数据
+      dialogVisible: false, // 是否弹框。
     };
   },
   // 渲染之前之行
@@ -73,6 +148,38 @@ export default {
   },
   // 操作方法
   methods: {
+    // 点击“添加”弹出框
+    add() {
+      this.dialogVisible = true;
+    },
+    // 添加或者修改
+    saveOrUpdate() {
+      // 根据id来判断是添加还是修改
+      // 1、没有id，就是添加
+      if (!this.sysRole.id) {
+        this.save();
+      } else {
+        // 2、有id，就是修改
+        this.update();
+      }
+    },
+    // 添加方法
+    save() {
+      // 调用saveRole接口，传入参数
+      api
+        .saveRole(this.sysRole)
+        // 添加之后
+        .then((response) => {
+          // 提示操作成功
+          this.$message.success(response.message || "操作成功");
+          // 关闭弹窗
+          this.dialogVisible = false;
+          // 刷新页面
+          this.fetchData(this.page);
+        });
+    },
+    // 修改方法
+    update() {},
     // 条件分页查询方法
     fetchData(current = 1) {
       this.page = current;
@@ -84,22 +191,24 @@ export default {
         });
     },
     // 删除
-    removeDataById(id){
-      this.$confirm('此操作将永久删除该记录, 是否继续?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
+    removeDataById(id) {
+      this.$confirm("此操作将永久删除该记录, 是否继续?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
         // 当点击"确定"时，执行then方法，当点击“取消”，执行catch方法，因为“取消”什么都不用做，所以就不写catch了
-    }).then(()=> {
-      // 点击“确定”后调用removeById方法
-      return api.removeById(id)
-    }).then(response => {
-      // 删除成功后刷新页面
-      this.fetchData()
-      // 提示信息
-      this.$message.success(response.message || '删除成功')
-    })
-    }
+      })
+        .then(() => {
+          // 点击“确定”后调用removeById方法
+          return api.removeById(id);
+        })
+        .then((response) => {
+          // 删除成功后刷新页面
+          this.fetchData();
+          // 提示信息
+          this.$message.success(response.message || "删除成功");
+        });
+    },
   },
 };
 </script>
