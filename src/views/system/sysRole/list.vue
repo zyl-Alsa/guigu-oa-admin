@@ -6,23 +6,29 @@
         <el-row>
           <el-col :span="24">
             <el-form-item label="角色名称">
+              <!-- 调整宽度以腾出空间放置搜索按钮 -->
               <el-input
-                style="width: 100%"
+                style="width: calc(100% - 80px); height: 32px"
                 v-model="searchObj.roleName"
                 placeholder="角色名称"
+                @input="handleInputChange"
+                @keyup.enter="handleEnterSearch"
+                autocomplete="off"
               ></el-input>
+              <el-button
+                type="primary"
+                icon="el-icon-search"
+                size="mini"
+                :loading="loading"
+                @click="fetchData()"
+                style="height: 32px"
+                >搜索</el-button
+              >
             </el-form-item>
           </el-col>
         </el-row>
         <el-row style="display: flex">
-          <el-button
-            type="primary"
-            icon="el-icon-search"
-            size="mini"
-            :loading="loading"
-            @click="fetchData()"
-            >搜索</el-button
-          >
+          <!-- 将搜索按钮从这里移除 -->
           <el-button type="success" icon="el-icon-plus" size="mini" @click="add"
             >添加</el-button
           >
@@ -148,6 +154,20 @@ export default {
   },
   // 操作方法
   methods: {
+    // 点击修改，弹出框，根据id查询数据显示
+    edit(id) {
+      // 弹出框
+      this.dialogVisible = true;
+      // 根据id查询
+      this.fetchDataById(id);
+    },
+    // 根据id查询方法
+    fetchDataById(id) {
+      // 调用接口中的getById方法
+      api.getById(id).then((response) => {
+        this.sysRole = response.data;
+      });
+    },
     // 点击“添加”弹出框
     add() {
       this.dialogVisible = true;
@@ -179,7 +199,16 @@ export default {
         });
     },
     // 修改方法
-    update() {},
+    update() {
+      api.updateById(this.sysRole).then((response) => {
+        // 提示操作成功
+        this.$message.success(response.message || "操作成功");
+        // 关闭弹窗
+        this.dialogVisible = false;
+        // 刷新页面
+        this.fetchData(this.page);
+      });
+    },
     // 条件分页查询方法
     fetchData(current = 1) {
       this.page = current;
@@ -208,6 +237,15 @@ export default {
           // 提示信息
           this.$message.success(response.message || "删除成功");
         });
+    },
+    // 输入框内容变化时更新搜索条件
+    handleInputChange() {
+      this.fetchData(); // 在输入框输入内容时实时更新搜索条件
+    },
+
+    // 回车键搜索
+    handleEnterSearch() {
+      this.fetchData();
     },
   },
 };
