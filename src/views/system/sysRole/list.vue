@@ -38,6 +38,9 @@
           <el-button icon="el-icon-refresh" size="mini" @click="resetData"
             >重置</el-button
           >
+          <el-button class="btn-add" size="mini" @click="batchRemove()"
+            >批量删除</el-button
+          >
         </el-row>
       </el-form>
     </div>
@@ -143,6 +146,7 @@ export default {
       limit: 5, // 每页显示记录数
       total: 0, // 总记录数
       searchObj: {}, // 条件对象
+      selection: [], // 多个复选框的值
       sysRole: {}, // 封装表单角色数据
       dialogVisible: false, // 是否弹框。
     };
@@ -154,6 +158,44 @@ export default {
   },
   // 操作方法
   methods: {
+    // 当多选选项发生变化的时候调用,
+    // 选择复选框，把复选框所在行内容传递
+    handleSelectionChange(selection) {
+      this.selection = selection;
+      console.log(this.selection);
+    },
+    // 批量删除
+    batchRemove() {
+      // 判断：
+      // 1、当用户没有勾选复选框时(selection数组为空时)
+      if (this.selection.length === 0) {
+        this.$message.warning("请选择要删除的记录！");
+        return;
+      }
+      // 弹出“确认删除”框
+      this.$confirm("此操作将永久删除该记录, 是否继续?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          // 点击删除，远程调用ajax
+          // 遍历selection，将id取出放入id列表
+          var idList = [];
+          // 遍历this.selection数组，其中 item 代表数组中的当前元素，然后将该元素的 id 属性添加到 idList 数组中
+          this.selection.forEach(item => {
+            idList.push(item.id);
+          });
+          // 调用api
+          return api.batchRemove(idList);
+        })
+        .then((response) => {
+          // 提示信息
+          this.$message.success(response.message);
+          // 刷新页面
+          this.fetchData();
+        });
+    },
     // 点击修改，弹出框，根据id查询数据显示
     edit(id) {
       // 弹出框
