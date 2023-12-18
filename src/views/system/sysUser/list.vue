@@ -270,7 +270,7 @@ export default {
           return api.removeById(id);
         })
         .then((response) => {
-          this.fetchData(this.page);
+          this.fetchData(1);  // 删除或添加后回到第一页
           this.$message.success(response.message || "删除成功");
         })
         .catch(() => {
