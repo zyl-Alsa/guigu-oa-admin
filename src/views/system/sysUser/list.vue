@@ -24,10 +24,10 @@
                 搜索
               </el-button>
             </el-form-item>
-       
+
           </el-col>
           <el-col :span="8">
-            <el-form-item label="操作时间" style="margin-left: 20px;">
+             <el-form-item label="操作时间" style="margin-left: 20px;">
               <el-date-picker
                 v-model="createTimes"
                 type="datetimerange"
@@ -41,13 +41,20 @@
           </el-col>
         </el-row>
         <el-row style="display: flex">
-          <!-- <el-button type="primary" icon="el-icon-search" size="mini" :loading="loading" @click="fetchData()">搜索</el-button> -->
+          <!-- <el-button
+            type="primary"
+            icon="el-icon-search"
+            size="mini"
+            :loading="loading"
+            @click="fetchData()"
+            >搜索</el-button
+          > -->
           <el-button icon="el-icon-refresh" size="mini" @click="resetData"
             >重置</el-button
-          >
+            >
           <el-button type="success" icon="el-icon-plus" size="mini" @click="add"
         >添 加</el-button
-      >
+          >
         </el-row>
       </el-form>
     </div>
@@ -115,6 +122,13 @@
             @click="removeDataById(scope.row.id)"
             title="删除"
           />
+          <el-button
+            type="warning"
+            icon="el-icon-baseball"
+            size="mini"
+            @click="showAssignRole(scope.row)"
+            title="分配角色"
+          />
         </template>
       </el-table-column>
     </el-table>
@@ -168,18 +182,50 @@
         >
       </span>
     </el-dialog>
+
+    <el-dialog title="分配角色" :visible.sync="dialogRoleVisible">
+      <el-form label-width="80px">
+        <el-form-item label="用户名">
+          <el-input disabled :value="sysUser.username"></el-input>
+        </el-form-item>
+
+        <el-form-item label="角色列表">
+          <el-checkbox
+            :indeterminate="isIndeterminate"
+            v-model="checkAll"
+            @change="handleCheckAllChange"
+            >全选</el-checkbox
+          >
+          <div style="margin: 15px 0"></div>
+          <el-checkbox-group
+            v-model="userRoleIds"
+            @change="handleCheckedChange"
+          >
+            <el-checkbox
+              v-for="role in allRoles"
+              :key="role.id"
+              :label="role.id"
+              >{{ role.roleName }}</el-checkbox
+            >
+          </el-checkbox-group>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button type="primary" @click="assignRole" size="small"
+          >保存</el-button
+        >
+        <el-button @click="dialogRoleVisible = false" size="small"
+          >取消</el-button
+        >
+      </div>
+    </el-dialog>
   </div>
 </template>
-  
-<style scoped>
-/* 新增这一段样式 */
-.no-right-radius /deep/ .el-input__inner {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-</style>
-  <script>
+
+
+<script>
 import api from "@/api/system/sysUser";
+import roleApi from "@/api/system/sysRole";
 const defaultForm = {
   id: "",
   username: "",
@@ -195,7 +241,7 @@ export default {
       list: null, // banner列表
       total: 0, // 数据库中的总记录数
       page: 1, // 默认页码
-      limit: 5, // 每页记录数
+      limit: 10, // 每页记录数
       searchObj: {}, // 查询表单对象
 
       createTimes: [],
@@ -203,6 +249,12 @@ export default {
       dialogVisible: false,
       sysUser: defaultForm,
       saveBtnDisabled: false,
+
+      dialogRoleVisible: false,
+      allRoles: [], // 所有角色列表
+      userRoleIds: [], // 用户的角色ID的列表
+      isIndeterminate: false, // 是否是不确定的
+      checkAll: false, // 是否全选
     };
   },
 
@@ -210,6 +262,10 @@ export default {
   created() {
     console.log("list created......");
     this.fetchData();
+
+    roleApi.findAll().then((response) => {
+      this.roleList = response.data;
+    });
   },
 
   // 生命周期函数：内存准备完毕，页面渲染成功
@@ -326,8 +382,8 @@ export default {
       });
     },
 
-    // 输入框内容变化时更新搜索条件
-    handleInputChange() {
+        // 输入框内容变化时更新搜索条件
+        handleInputChange() {
       this.fetchData(); // 在输入框输入内容时实时更新搜索条件
     },
 
@@ -335,7 +391,78 @@ export default {
     handleEnterSearch() {
       this.fetchData();
     },
+    
+
+    showAssignRole(row) {
+      this.sysUser = row;
+      this.dialogRoleVisible = true;
+      this.getRoles();
+    },
+
+    getRoles() {
+      roleApi.getRoles(this.sysUser.id).then((response) => {
+        const { allRolesList, assginRoleList } = response.data;
+        this.allRoles = allRolesList;
+        this.userRoleIds = assginRoleList.map((item) => item.id);
+        this.checkAll = allRolesList.length === assginRoleList.length;
+        this.isIndeterminate =
+          assginRoleList.length > 0 &&
+          assginRoleList.length < allRolesList.length;
+      });
+    },
+
+    /*
+    全选勾选状态发生改变的监听
+    */
+    handleCheckAllChange(value) {
+      // value 当前勾选状态true/false
+      // 如果当前全选, userRoleIds就是所有角色id的数组, 否则是空数组
+      this.userRoleIds = value ? this.allRoles.map((item) => item.id) : [];
+      // 如果当前不是全选也不全不选时, 指定为false
+      this.isIndeterminate = false;
+    },
+
+    /*
+    角色列表选中项发生改变的监听
+    */
+    handleCheckedChange(value) {
+      const { userRoleIds, allRoles } = this;
+      this.checkAll =
+        userRoleIds.length === allRoles.length && allRoles.length > 0;
+      this.isIndeterminate =
+        userRoleIds.length > 0 && userRoleIds.length < allRoles.length;
+    },
+
+    assignRole() {
+      let assginRoleVo = {
+        userId: this.sysUser.id,
+        roleIdList: this.userRoleIds,
+      };
+      roleApi.assignRoles(assginRoleVo).then((response) => {
+        this.$message.success(response.message || "分配角色成功");
+        this.dialogRoleVisible = false;
+        this.fetchData(this.page);
+      });
+    },
+
+    switchStatus(row) {
+      row.status = row.status === 1 ? 0 : 1;
+      api.updateStatus(row.id, row.status).then((response) => {
+        if (response.code) {
+          this.$message.success(response.message || "操作成功");
+          this.dialogVisible = false;
+          this.fetchData();
+        }
+      });
+    },
   },
 };
 </script>
+
+<style scoped>
+.no-right-radius /deep/ .el-input__inner {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+</style>
 

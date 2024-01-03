@@ -56,5 +56,21 @@ export default {
         })
     },
 
-
+    // 更改用户状态
+    getRoles(adminId) {
+         // 获取数据
+        return request({
+          url: `${api_name}/toAssign/${adminId}`,
+          method: 'get'
+        })
+      },
+      
+    assignRoles(assginRoleVo) {
+        // 分配角色
+        return request({
+            url: `${api_name}/doAssign`,
+            method: 'post',
+            data: assginRoleVo
+        })
+    }
 } 
