@@ -31,7 +31,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="160"/>
-        <el-table-column label="操作" width="180" align="center" fixed="right">
+        <el-table-column label="操作" width="180" :align="center" fixed="right">
           <template slot-scope="scope">
             <el-button type="success" v-if="scope.row.type !== 2" icon="el-icon-plus" size="mini" @click="add(scope.row)" title="添加下级节点"/>
             <el-button type="primary" icon="el-icon-edit" size="mini" @click="edit(scope.row)" title="修改"/>

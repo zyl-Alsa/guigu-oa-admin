@@ -81,6 +81,7 @@
             @click="removeDataById(scope.row.id)"
             title="删除"
           />
+          <el-button type="warning" icon="el-icon-baseball" size="mini" @click="showAssignAuth(scope.row)" title="分配权限"/>
         </template>
       </el-table-column>
     </el-table>
@@ -156,8 +157,12 @@ export default {
     // 要在页面渲染之前执行fetchData方法
     this.fetchData();
   },
-  // 操作方法
+  // 操作方法 
   methods: {
+    // 跳转到分配菜单的页面
+    showAssignAuth(row) {
+      this.$router.push('/system/assignAuth?id='+row.id+'&roleName='+row.roleName);
+    },
     // 当多选选项发生变化的时候调用,
     // 选择复选框，把复选框所在行内容传递
     handleSelectionChange(selection) {
