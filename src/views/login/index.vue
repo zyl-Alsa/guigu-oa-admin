@@ -58,8 +58,9 @@ import { validUsername } from '@/utils/validate'
 export default {
   name: 'Login',
   data() {
+    // 用户名检查只检查长度
     const validateUsername = (rule, value, callback) => {
-      if (!validUsername(value)) {
+      if (value.length<4) {
         callback(new Error('Please enter the correct user name'))
       } else {
         callback()
@@ -120,7 +121,7 @@ export default {
           return false
         }
       })
-    }
+    },
   }
 }
 </script>

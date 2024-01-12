@@ -28,9 +28,14 @@
           </el-col>
         </el-row>
         <el-row style="display: flex">
-          <!-- 将搜索按钮从这里移除 -->
-          <el-button type="success" icon="el-icon-plus" size="mini" @click="add"
-            >添加</el-button
+          <!-- $hasBP('bnt.sysRole.add')控制按钮是否显示 -->
+          <el-button
+            type="success"
+            icon="el-icon-plus"
+            size="mini"
+            @click="add"
+            :disabled="$hasBP('bnt.sysRole.add') === false"
+            >添 加</el-button
           >
           <!-- 工具条 -->
           <!-- <div class="tools-div">
@@ -81,7 +86,13 @@
             @click="removeDataById(scope.row.id)"
             title="删除"
           />
-          <el-button type="warning" icon="el-icon-baseball" size="mini" @click="showAssignAuth(scope.row)" title="分配权限"/>
+          <el-button
+            type="warning"
+            icon="el-icon-baseball"
+            size="mini"
+            @click="showAssignAuth(scope.row)"
+            title="分配权限"
+          />
         </template>
       </el-table-column>
     </el-table>
@@ -157,11 +168,13 @@ export default {
     // 要在页面渲染之前执行fetchData方法
     this.fetchData();
   },
-  // 操作方法 
+  // 操作方法
   methods: {
     // 跳转到分配菜单的页面
     showAssignAuth(row) {
-      this.$router.push('/system/assignAuth?id='+row.id+'&roleName='+row.roleName);
+      this.$router.push(
+        "/system/assignAuth?id=" + row.id + "&roleName=" + row.roleName
+      );
     },
     // 当多选选项发生变化的时候调用,
     // 选择复选框，把复选框所在行内容传递
@@ -188,7 +201,7 @@ export default {
           // 遍历selection，将id取出放入id列表
           var idList = [];
           // 遍历this.selection数组，其中 item 代表数组中的当前元素，然后将该元素的 id 属性添加到 idList 数组中
-          this.selection.forEach(item => {
+          this.selection.forEach((item) => {
             idList.push(item.id);
           });
           // 调用api
